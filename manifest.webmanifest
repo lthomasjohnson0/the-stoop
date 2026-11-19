@@ -1,0 +1,18 @@
+{
+  "name": "The Stoop",
+  "short_name": "The Stoop",
+  "description": "A diary for Black film and TV. Log what you watch, keep your four favorites on the stoop, and get picks that explain themselves.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#5c3d2e",
+  "theme_color": "#5c3d2e",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

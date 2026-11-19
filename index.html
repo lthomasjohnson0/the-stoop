@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Stoop: a diary for Black film and TV</title>
+  <meta name="description" content="Log the Black films and shows you've watched, keep your four favorites on the stoop, and get recommendations that explain themselves.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%236f4e37'/%3E%3Cpath d='M4 26h8v-5h6v-5h6v-5h4v16H4z' fill='%23f4e9da'/%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#5c3d2e">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="The Stoop">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/block.css">
+  <script src="js/config.js" defer></script>
+  <script src="js/films.js" defer></script>
+  <script src="js/shows.js" defer></script>
+  <script src="js/tmdb.js" defer></script>
+  <script src="js/store.js" defer></script>
+  <script src="js/recommend.js" defer></script>
+  <script src="js/classroom.js" defer></script>
+  <script src="js/app.js" defer></script>
+  <script src="js/pwa.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <a class="wordmark" href="./">The Stoop</a>
+    <nav class="tabs" id="tabs" aria-label="Sections" hidden>
+      <button type="button" class="tab" data-view="shelf" aria-current="page">The shelf</button>
+      <button type="button" class="tab" data-view="foryou">For you</button>
+      <button type="button" class="tab" data-view="diary">Watched</button>
+      <button type="button" class="tab" data-view="watchlist">Watchlist <span class="tab-count" id="watchlist-count"></span></button>
+      <button type="button" class="tab" data-view="block" id="block-tab" hidden>The block</button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Shown when there is no TMDB key yet, or the saved key stops working -->
+    <section class="key-gate" id="key-gate" aria-labelledby="key-title" hidden>
+      <h1 id="key-title">Pull up a seat.</h1>
+      <p>The Stoop gets its posters, cast, and crew from The Movie Database. Paste a free TMDB API key to open the shelf. It stays in this browser only.</p>
+      <form class="key-form" id="key-form">
+        <label for="key-input">TMDB API key</label>
+        <div class="key-row">
+          <input id="key-input" name="key" type="text" autocomplete="off" spellcheck="false" required>
+          <button type="submit" class="btn btn-solid">Open the shelf</button>
+        </div>
+        <p class="form-status" id="key-status" role="status" aria-live="polite"></p>
+      </form>
+      <p class="fine-print">No key yet? Make a free account at <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org</a>, then copy the API Key from Settings, API.</p>
+    </section>
+
+    <div id="app" hidden>
+      <!-- A stoop someone shared by link (?stoop=...) -->
+      <section class="shared-stoop" id="shared-stoop" aria-labelledby="shared-title" hidden>
+        <div class="view-head">
+          <div>
+            <h2 id="shared-title">Someone shared their stoop</h2>
+            <p class="view-sub">Their top four. Tap one to see what it's about, rate it, or save it for later.</p>
+          </div>
+          <button type="button" class="btn btn-line" id="shared-close">Back to my stoop</button>
+        </div>
+        <p class="status" id="shared-status" role="status" aria-live="polite"></p>
+        <ul class="poster-grid" id="shared-grid"></ul>
+      </section>
+
+      <!-- The stoop: the visitor's four favorites, one per step -->
+      <section class="stoop" aria-labelledby="stoop-title">
+        <div class="stoop-copy">
+          <h1 id="stoop-title">Four favorites hold the steps.</h1>
+          <p>Films and shows, logged in one place. Rate what you watch, put your top four on the stoop, and the more you rate, the better your picks get.</p>
+          <div class="stoop-actions">
+            <button type="button" class="btn btn-solid" id="add-to-stoop">Add to my stoop</button>
+            <button type="button" class="btn btn-line" id="share-stoop">Share my stoop</button>
+          </div>
+        </div>
+        <div class="stoop-scene">
+          <svg class="railing" viewBox="0 0 400 200" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <polyline points="0,170 400,20" />
+            <line x1="40" y1="155" x2="40" y2="200" />
+            <line x1="100" y1="132.5" x2="100" y2="200" />
+            <line x1="160" y1="110" x2="160" y2="200" />
+            <line x1="220" y1="87.5" x2="220" y2="200" />
+            <line x1="280" y1="65" x2="280" y2="200" />
+            <line x1="340" y1="42.5" x2="340" y2="200" />
+          </svg>
+          <ol class="steps" id="steps" aria-label="Your four favorites, from the bottom step up"></ol>
+        </div>
+      </section>
+
+      <!-- The shelf: curated films plus TMDB search -->
+      <section class="view" id="view-shelf" aria-labelledby="shelf-title">
+        <div class="view-head">
+          <div>
+            <h2 id="shelf-title">The shelf</h2>
+            <p class="view-sub" id="shelf-sub">Black films and shows from the silent era to now. Tap one to rate it or log it.</p>
+          </div>
+          <form class="search" id="search-form" role="search">
+            <label class="visually-hidden" for="search-input">Search any film or show on TMDB</label>
+            <input id="search-input" type="search" placeholder="Search any film or show" autocomplete="off">
+            <button type="submit" class="btn btn-line">Search</button>
+          </form>
+        </div>
+
+        <div class="media-switch" id="media-switch" role="group" aria-label="Films or shows">
+          <button type="button" data-media="movie" aria-pressed="true">Films</button>
+          <button type="button" data-media="tv" aria-pressed="false">Shows</button>
+        </div>
+        <div class="filters" id="era-filters" role="group" aria-label="Filter by era"></div>
+        <label class="toggle">
+          <input type="checkbox" id="hide-watched">
+          <span>Hide what I've watched</span>
+        </label>
+
+        <p class="status" id="shelf-status" role="status" aria-live="polite"></p>
+        <div class="progress" id="shelf-progress" hidden><span class="progress-bar" id="shelf-progress-bar"></span></div>
+        <ul class="poster-grid" id="shelf-grid"></ul>
+      </section>
+
+      <!-- For you: explained recommendations -->
+      <section class="view" id="view-foryou" aria-labelledby="foryou-title" hidden>
+        <div class="view-head">
+          <div>
+            <h2 id="foryou-title">For you</h2>
+            <p class="view-sub">Films and shows from the shelf, picked from how you rate. Every pick tells you why it made the list.</p>
+          </div>
+          <button type="button" class="btn btn-line" id="refresh-picks" hidden>Refresh picks</button>
+        </div>
+        <p class="status" id="foryou-status" role="status" aria-live="polite"></p>
+        <div class="progress" id="foryou-progress" hidden><span class="progress-bar" id="foryou-progress-bar"></span></div>
+        <ol class="rec-list" id="rec-list"></ol>
+      </section>
+
+      <!-- Diary: everything logged as watched -->
+      <section class="view" id="view-diary" aria-labelledby="diary-title" hidden>
+        <div class="view-head">
+          <div>
+            <h2 id="diary-title">Watched</h2>
+            <p class="view-sub">Everything you've watched, newest first.</p>
+          </div>
+        </div>
+        <dl class="stats" id="diary-stats"></dl>
+        <div id="diary-list"></div>
+      </section>
+
+      <!-- Watchlist -->
+      <section class="view" id="view-watchlist" aria-labelledby="watchlist-title" hidden>
+        <div class="view-head">
+          <div>
+            <h2 id="watchlist-title">Watchlist</h2>
+            <p class="view-sub">Films and shows you want to watch next.</p>
+          </div>
+        </div>
+        <p class="status" id="watchlist-status"></p>
+        <ul class="poster-grid" id="watchlist-grid"></ul>
+      </section>
+
+      <!-- The block: everyone who shared their stoop, from Supabase -->
+      <section class="view" id="view-block" aria-labelledby="block-title" hidden>
+        <div class="view-head">
+          <div>
+            <h2 id="block-title">The block</h2>
+            <p class="view-sub">Everybody's stoop, side by side. Only people who chose to share show up here.</p>
+          </div>
+          <button type="button" class="btn btn-line" id="block-refresh">Refresh</button>
+        </div>
+        <div class="block-you" id="block-you"></div>
+        <p class="status" id="block-status" role="status" aria-live="polite"></p>
+        <section class="block-most" id="block-most" aria-labelledby="block-most-title" hidden>
+          <h3 id="block-most-title">Most picked on the block</h3>
+          <ol class="most-list" id="most-list"></ol>
+        </section>
+        <ul class="block-grid" id="block-grid"></ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>Film data and images from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+    <p>Your ratings and lists are saved in this browser only. <button type="button" class="link-button" id="reset-key" hidden>Use a different TMDB key</button> <button type="button" class="link-button" id="install-app" hidden>Install the app</button></p>
+  </footer>
+
+  <!-- Film view -->
+  <dialog class="film-dialog" id="film-dialog" aria-labelledby="film-title">
+    <div class="film-backdrop" id="film-backdrop"></div>
+    <button type="button" class="dialog-close" id="dialog-close" aria-label="Close film">&times;</button>
+
+    <div class="film-body">
+      <div class="film-poster-slot" id="film-poster-slot"></div>
+      <div class="film-info">
+        <h2 id="film-title">Film</h2>
+        <p class="film-meta" id="film-meta"></p>
+        <p class="film-tagline" id="film-tagline"></p>
+        <p class="film-note" id="film-note" hidden></p>
+        <p class="film-overview" id="film-overview"></p>
+        <p class="film-cast" id="film-cast"></p>
+        <p class="status" id="film-status" role="status" aria-live="polite"></p>
+        <p class="film-links">
+          <a id="film-trailer" href="#" target="_blank" rel="noopener" hidden>Watch the trailer on YouTube</a>
+          <a id="film-tmdb" href="#" target="_blank" rel="noopener">See it on TMDB</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="film-log">
+      <fieldset class="rating" id="rating">
+        <legend>Your rating</legend>
+        <div class="stars" id="stars">
+          <span class="star" data-star="1">
+            <input type="radio" name="rating" id="star-0-5" value="0.5"><label class="star-half star-left" for="star-0-5"><span class="visually-hidden">0.5 stars</span></label>
+            <input type="radio" name="rating" id="star-1" value="1"><label class="star-half star-right" for="star-1"><span class="visually-hidden">1 star</span></label>
+          </span>
+          <span class="star" data-star="2">
+            <input type="radio" name="rating" id="star-1-5" value="1.5"><label class="star-half star-left" for="star-1-5"><span class="visually-hidden">1.5 stars</span></label>
+            <input type="radio" name="rating" id="star-2" value="2"><label class="star-half star-right" for="star-2"><span class="visually-hidden">2 stars</span></label>
+          </span>
+          <span class="star" data-star="3">
+            <input type="radio" name="rating" id="star-2-5" value="2.5"><label class="star-half star-left" for="star-2-5"><span class="visually-hidden">2.5 stars</span></label>
+            <input type="radio" name="rating" id="star-3" value="3"><label class="star-half star-right" for="star-3"><span class="visually-hidden">3 stars</span></label>
+          </span>
+          <span class="star" data-star="4">
+            <input type="radio" name="rating" id="star-3-5" value="3.5"><label class="star-half star-left" for="star-3-5"><span class="visually-hidden">3.5 stars</span></label>
+            <input type="radio" name="rating" id="star-4" value="4"><label class="star-half star-right" for="star-4"><span class="visually-hidden">4 stars</span></label>
+          </span>
+          <span class="star" data-star="5">
+            <input type="radio" name="rating" id="star-4-5" value="4.5"><label class="star-half star-left" for="star-4-5"><span class="visually-hidden">4.5 stars</span></label>
+            <input type="radio" name="rating" id="star-5" value="5"><label class="star-half star-right" for="star-5"><span class="visually-hidden">5 stars</span></label>
+          </span>
+        </div>
+        <p class="verdict" id="verdict" aria-live="polite"></p>
+        <button type="button" class="link-button" id="clear-rating" hidden>Clear rating</button>
+      </fieldset>
+
+      <div class="log-actions">
+        <button type="button" class="chip" id="toggle-watched" aria-pressed="false">Watched</button>
+        <button type="button" class="chip" id="toggle-watchlist" aria-pressed="false">Watchlist</button>
+        <button type="button" class="chip" id="toggle-stoop" aria-pressed="false">On my stoop</button>
+      </div>
+
+      <label class="take-label" for="film-take">Your take</label>
+      <textarea id="film-take" rows="3" placeholder="What stuck with you?"></textarea>
+    </div>
+  </dialog>
+
+  <!-- Quick add: search for a title and put it straight on the stoop -->
+  <dialog class="picker-dialog" id="picker-dialog" aria-labelledby="picker-title">
+    <div class="picker-head">
+      <h2 id="picker-title">Add to your stoop</h2>
+      <button type="button" class="picker-close" id="picker-close" aria-label="Close">&times;</button>
+    </div>
+    <form class="search picker-search" id="picker-form" role="search">
+      <label class="visually-hidden" for="picker-input">Search any film or show</label>
+      <input id="picker-input" type="search" placeholder="Search any film or show" autocomplete="off">
+      <button type="submit" class="btn btn-solid">Search</button>
+    </form>
+    <p class="status" id="picker-status" role="status" aria-live="polite"></p>
+    <ul class="picker-results" id="picker-results"></ul>
+  </dialog>
+
+  <!-- Asked once, the first time someone puts a title on their stoop -->
+  <dialog class="share-dialog" id="share-dialog" aria-labelledby="share-title">
+    <form class="share-form" id="share-form" method="dialog">
+      <h2 id="share-title">Put your stoop on the block?</h2>
+      <p>Your top four and your star ratings will show up on The block, where anyone with this link can see them. Your written takes stay on this device.</p>
+      <label for="share-name">Name to show (optional)</label>
+      <input id="share-name" name="name" type="text" maxlength="40" autocomplete="nickname" placeholder="Leave blank to show up as Anonymous">
+      <div class="share-actions">
+        <button type="submit" class="btn btn-solid" value="share">Share my stoop</button>
+        <button type="submit" class="btn btn-line" value="private">Keep it private</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <template id="poster-template">
+    <li class="poster-item">
+      <button type="button" class="poster-card">
+        <span class="poster-frame"></span>
+        <span class="poster-title">Film</span>
+        <span class="poster-year"></span>
+        <span class="poster-marks"></span>
+      </button>
+    </li>
+  </template>
+</body>
+</html>
